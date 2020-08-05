@@ -54,3 +54,15 @@ main = hspec $ do
 
         it "should read a float" $
             readExpr "123.123" `shouldBe` "Found Value: Float 123.123"
+        
+        it "should parse List (123 123 123)" $ 
+            readExpr "(123 123 123)" `shouldBe` "Found Value: List [Number 123,Number 123,Number 123]"
+
+        it "should parse Nested List" $ 
+            readExpr "(a (nested) test)" `shouldBe` "Found Value: List [Atom \"a\",List [Atom \"nested\"],Atom \"test\"]"
+            
+        it "should parse DottedList (123 123 123)" $ 
+            readExpr "(123 123 . 123)" `shouldBe` "Found Value: DottedList [Number 123,Number 123] (Number 123)"
+        
+        it "should parse Quotted" $ 
+            readExpr "'abcdef" `shouldBe` "Found Value: List [Atom \"quote\",Atom \"abcdef\"]"

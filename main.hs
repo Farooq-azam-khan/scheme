@@ -35,11 +35,18 @@ spaces = skipMany1 space
 -- =========== parser ===========
 parseExpr :: Parser LispVal 
 parseExpr = parseAtom 
+        <|> try parseCharacter
         <|> parseString
         <|> try parseFloat 
         <|> try parseNumber 
         <|> try parseBool
-        <|> try parseCharacter
+        <|> parseQuoted
+        <|> do 
+            char '('
+            x <- try parseList <|> parseDottedList
+            char ')'
+            return x
+
 
 parseFloat :: Parser LispVal
 parseFloat = do 
@@ -59,8 +66,6 @@ parseCharacter = do
         "newline" -> '\n'
         otherwise -> (value !! 0)
 
-
- 
 escapedChars :: Parser Char
 escapedChars = do char '\\' 
                   x <- oneOf "\\\"nrt" 
@@ -141,3 +146,18 @@ bin2dig' digint (x:xs) = let old = 2 * digint + (if x == '0' then 0 else 1) in
 -- Parsing.exercises.1.2
 -- parseNumber = (many1 digit) >>= \x -> return $ Number $ read x
 
+-- Recursive Parser (adding lists, dotted lists, and quoted datums)
+parseList :: Parser LispVal
+parseList = liftM List $ sepBy parseExpr spaces 
+
+parseDottedList :: Parser LispVal 
+parseDottedList = do 
+    head <- endBy parseExpr spaces 
+    tail <- char '.' >> spaces >> parseExpr 
+    return $ DottedList head tail 
+
+parseQuoted :: Parser LispVal 
+parseQuoted = do 
+    char '\'' 
+    x <- parseExpr
+    return $ List [Atom "quote", x]
