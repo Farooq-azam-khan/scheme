@@ -182,11 +182,43 @@ primitives= [
     ("*", numericBinop (*)),
     ("mod", numericBinop mod),
     ("quotient", numericBinop quot),
-    ("remainder", numericBinop rem)
+    ("remainder", numericBinop rem),
+    ("number?", unaryop isNumber),
+    ("string?", unaryop isString),
+    ("boolean?", unaryop isBoolean), 
+    ("list?", unaryop isList),
+    ("not", unaryop invert)
     ]
+
+isList :: LispVal -> LispVal
+isList (List _) = Bool True
+isList (DottedList _ _) = Bool True 
+isList _ = Bool False 
+
+isBoolean :: LispVal -> LispVal
+isBoolean (Bool _) = Bool True 
+isBoolean _ = Bool False 
+
+invert :: LispVal -> LispVal
+invert (Bool True) = Bool False 
+invert (Bool False) = Bool True
+invert _ = Bool False 
+
+isString :: LispVal -> LispVal 
+isString (Atom _) = Bool True 
+isString (String _) = Bool True 
+isString _ = Bool False 
+
+isNumber :: LispVal -> LispVal
+isNumber (Number _) = Bool True 
+isNumber _ = Bool False 
+
+unaryop :: (LispVal -> LispVal) -> [LispVal] -> LispVal
+unaryop f [v] = f v 
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
 numericBinop op params = Number $ foldl1 op $ map unpackNum params
+
 
 unpackNum :: LispVal -> Integer
 unpackNum (Number n) = n
