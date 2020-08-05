@@ -2,3 +2,8 @@
 ## Packages Used
 - `cabal install parsec` (for parsing)
 - `cabal install hspec` (for testing)
+
+## TODO 
+* [] fix `Character`
+* [] add `Backquote` implementation
+* [] add `vector` implementation 

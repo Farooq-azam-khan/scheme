@@ -11,58 +11,61 @@ main = hspec $ do
     --         readExpr "   !" `shouldBe` "Found Value"
         
         it "should find '!'" $ 
-            readExpr "!" `shouldBe` "Found Value: Atom \"!\""
+            readExpr "!" `shouldBe` Atom "!"
         
         it "should find (String \"abc\")" $ 
-            readExpr "abc" `shouldBe` "Found Value: Atom \"abc\""
+            readExpr "abc" `shouldBe` Atom "abc"
 
         it "should find (String \"abc def\")" $ 
-            readExpr "abc def" `shouldBe` "Found Value: Atom \"abc\""
+            readExpr "abc def" `shouldBe` Atom "abc"
         
         it "should find True #t" $ 
-            readExpr "#t" `shouldBe` "Found Value: Bool True"
+            readExpr "#t" `shouldBe` Bool True
         
         it "should find False #f" $ 
-            readExpr "#f" `shouldBe` "Found Value: Bool False"
+            readExpr "#f" `shouldBe` Bool False
 
         it "should read tab (\\t)" $
-            readExpr "\"\t\"" `shouldBe` "Found Value: String \"\\t\""
+            readExpr "\"\t\"" `shouldBe` String "\t"
         
         it "should read carriage return (\\r)" $
-            readExpr "\"\r\"" `shouldBe` "Found Value: String \"\\r\""
+            readExpr "\"\r\"" `shouldBe` String "\r"
 
         it "should read new line (\\n)" $
-            readExpr "\"\n\"" `shouldBe` "Found Value: String \"\\n\""
+            readExpr "\"\n\"" `shouldBe` String "\n"
         
         it "should read backslash (\\)" $
-            readExpr "\" \\\\ \"" `shouldBe` "Found Value: String \" \\\\ \""
+            readExpr "\" \\\\ \"" `shouldBe` String " \\ "
 
         it "should read decimal number 123" $
-            readExpr "123" `shouldBe` "Found Value: Number 123"
+            readExpr "123" `shouldBe` Number 123
         
         it "should read explicit decimal number 123" $
-            readExpr "#d123" `shouldBe` "Found Value: Number 123"
+            readExpr "#d123" `shouldBe` Number 123
         
         it "should read hex ABC" $
-            readExpr "#xABC" `shouldBe` "Found Value: Number 291"
+            readExpr "#xABC" `shouldBe` Number 291
         
         it "should read oct 123" $
-            readExpr "#o123" `shouldBe` "Found Value: Number 83"
+            readExpr "#o123" `shouldBe` Number 83
         
         it "should read bin 11" $
-            readExpr "#b11" `shouldBe` "Found Value: Number 3"
+            readExpr "#b11" `shouldBe` Number 3
 
         it "should read a float" $
-            readExpr "123.123" `shouldBe` "Found Value: Float 123.123"
+            readExpr "123.123" `shouldBe` Float 123.123
         
         it "should parse List (123 123 123)" $ 
-            readExpr "(123 123 123)" `shouldBe` "Found Value: List [Number 123,Number 123,Number 123]"
+            readExpr "(123 123 123)" `shouldBe` List [Number 123,Number 123,Number 123]
 
         it "should parse Nested List" $ 
-            readExpr "(a (nested) test)" `shouldBe` "Found Value: List [Atom \"a\",List [Atom \"nested\"],Atom \"test\"]"
+            readExpr "(a (nested) test)" `shouldBe` List [Atom "a",List [Atom "nested"],Atom "test"]
             
         it "should parse DottedList (123 123 123)" $ 
-            readExpr "(123 123 . 123)" `shouldBe` "Found Value: DottedList [Number 123,Number 123] (Number 123)"
+            readExpr "(123 123 . 123)" `shouldBe` DottedList [Number 123,Number 123] (Number 123)
         
         it "should parse Quotted" $ 
-            readExpr "'abcdef" `shouldBe` "Found Value: List [Atom \"quote\",Atom \"abcdef\"]"
+            readExpr "'abcdef" `shouldBe` List [Atom "quote",Atom "abcdef"]
+
+        it "should parse list and dotted list" $ 
+            readExpr "(a (dotted . list) test)" `shouldBe` List [Atom "a",DottedList [Atom "dotted"] (Atom "list"),Atom "test"]

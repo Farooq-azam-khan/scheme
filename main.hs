@@ -5,10 +5,10 @@ import Control.Monad -- for liftM
 import Numeric
 
 main :: IO()
-main = do 
+main = getArgs >>= print.eval.readExpr.head
     -- gets the first argument and ignores the rest
-    (expr:_) <- getArgs 
-    putStrLn $ readExpr expr
+    -- (expr:_) <- getArgs 
+    -- putStrLn $ readExpr expr
 
 -- =========== datatypes ===========
 data LispVal = Atom String 
@@ -19,15 +19,15 @@ data LispVal = Atom String
             | Bool Bool
             | Character Char
             | Float Double 
-            deriving(Show)
+            deriving(Show, Eq)
 
 symbol :: Parser Char 
 symbol = oneOf "!$%&|*+-/:<=>?@^_~"
 
-readExpr :: String -> String 
+readExpr :: String -> LispVal 
 readExpr input = case parse parseExpr "lisp" input of 
-    Left err -> "No Match: " ++ show err 
-    Right val -> "Found Value: " ++ (show val)
+    Left err -> String $ "No Match: " ++ show err 
+    Right val -> val
 
 spaces :: Parser () 
 spaces = skipMany1 space
@@ -161,3 +161,11 @@ parseQuoted = do
     char '\'' 
     x <- parseExpr
     return $ List [Atom "quote", x]
+
+-- =========== eval ===========
+eval :: LispVal -> LispVal
+-- binds val to the whole LispVal, and not just the contents of the String constructor
+eval val@(String _) = val 
+eval val@(Number _) = val 
+eval val@(Bool _) = val 
+eval (List [Atom "quote", val]) = val 
