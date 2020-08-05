@@ -17,6 +17,8 @@ data LispVal = Atom String
             | Number Integer 
             | String String 
             | Bool Bool
+            | Character Char
+            | Float Double 
             deriving(Show)
 
 symbol :: Parser Char 
@@ -25,7 +27,7 @@ symbol = oneOf "!$%&|*+-/:<=>?@^_~"
 readExpr :: String -> String 
 readExpr input = case parse parseExpr "lisp" input of 
     Left err -> "No Match: " ++ show err 
-    Right val -> "Found Value" -- : " ++ (show val)
+    Right val -> "Found Value: " ++ (show val)
 
 spaces :: Parser () 
 spaces = skipMany1 space
@@ -34,17 +36,31 @@ spaces = skipMany1 space
 parseExpr :: Parser LispVal 
 parseExpr = parseAtom 
         <|> parseString
-        <|> parseNumber 
-        <|> parseBool
+        <|> try parseFloat 
+        <|> try parseNumber 
+        <|> try parseBool
+        <|> try parseCharacter
+
+parseFloat :: Parser LispVal
+parseFloat = do 
+    x <- many1 digit 
+    char '.' 
+    y <- many1 digit 
+    -- output of readFloat = [(123.123, "")] (use fst.head to access the list and the tuple's values)
+    return $ Float $ (fst.head$readFloat (x++"."++y))
+
+parseCharacter :: Parser LispVal 
+parseCharacter = do 
+    try $ string "#\\"
+    value <- try (string "newline" <|> string "space") 
+                <|> do { x <- anyChar; notFollowedBy alphaNum ; return [x] }
+    return $ Character $ case value of
+        "space" -> ' '
+        "newline" -> '\n'
+        otherwise -> (value !! 0)
+
 
  
--- parseString = do 
---     char '"'
---     x <- many (noneOf "\"")
---     char '"'
---     return $ String x 
-
--- Parsing.exercises.2
 escapedChars :: Parser Char
 escapedChars = do char '\\' 
                   x <- oneOf "\\\"nrt" 
@@ -66,10 +82,11 @@ parseAtom = do
     first <- letter <|> symbol 
     rest <- many (letter <|> digit <|> symbol)
     let atom = first:rest 
-    return $ case atom of 
-        "#t" -> Bool True 
-        "#f" -> Bool False 
-        _ -> Atom atom 
+    return $ Atom atom 
+    -- $ case atom of 
+    --     "#t" -> Bool True 
+    --     "#f" -> Bool False 
+    --     _ -> Atom atom 
 
 parseBool :: Parser LispVal
 parseBool = do
