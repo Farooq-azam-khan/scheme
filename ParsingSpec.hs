@@ -27,3 +27,30 @@ main = hspec $ do
         
         it "should find False #f" $ 
             readExpr "#f" `shouldBe` "Found Value"
+
+        it "should read tab (\\t)" $
+            readExpr "\"\t\"" `shouldBe` "Found Value"
+        
+        it "should read carriage return (\\r)" $
+            readExpr "\"\r\"" `shouldBe` "Found Value"
+
+        it "should read new line (\\n)" $
+            readExpr "\"\n\"" `shouldBe` "Found Value"
+        
+        it "should read backslash (\\)" $
+            readExpr "\" \\\\ \"" `shouldBe` "Found Value"
+
+        it "should read decimal number 123" $
+            readExpr "123" `shouldBe` "Found Value"
+        
+        it "should read explicit decimal number 123" $
+            readExpr "#d123" `shouldBe` "Found Value"
+        
+        it "should read hex ABC" $
+            readExpr "#xABC" `shouldBe` "Found Value"
+        
+        it "should read oct 123" $
+            readExpr "#o123" `shouldBe` "Found Value"
+        
+        it "should read bin 11" $
+            readExpr "#b11" `shouldBe` "Found Value"
