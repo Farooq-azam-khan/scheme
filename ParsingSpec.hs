@@ -70,5 +70,19 @@ main = hspec $ do
         it "should parse list and dotted list" $ 
             readExpr "(a (dotted . list) test)" `shouldBe` List [Atom "a",DottedList [Atom "dotted"] (Atom "list"),Atom "test"]
         
+    describe "Evaluate proper input and output" $ do 
+
         it "should evaluate (+ 2 2)" $
             (eval . readExpr) "(+ 2 2)" `shouldBe` Number 4
+
+        it "should evaluate (- 2 2)" $
+            (eval . readExpr) "(- 2 2)" `shouldBe` Number 0
+            
+        it "should evaluate (* 2 2)" $
+            (eval . readExpr) "(* 2 2)" `shouldBe` Number 4
+
+        -- it "should check equlity (eq? 1 1)" $
+        --     (eval . readExpr) "(eq? 1 1)" `shouldBe` Bool True 
+            
+
+            
