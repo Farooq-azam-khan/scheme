@@ -1,4 +1,6 @@
-module ParsingSpec where 
+module TestingSpec where 
+
+--- broken tests due to IO output
 
 import Test.Hspec
 import Main hiding (main)
@@ -106,4 +108,8 @@ main = hspec $ do
         it "should check if condition and return string" $ 
             lispExecute "(if (= 1 2) \"equal\" \"not equal\")" `shouldBe` "String \"not equal\""
 
-            
+    describe "Spec should work with variable" $ do 
+        it "should define varaible and add with it" $ do
+            x <- lispExecute "(define x 3)"
+            lispExecute "(+ x 3)" `shouldBe` "Number 6" 
+

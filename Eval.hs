@@ -8,23 +8,24 @@ import Numeric
 import Datatypes
 import Parser 
 
-eval :: LispVal -> ThrowsError LispVal
--- binds val to the whole LispVal, and not just the contents of the String constructor
-eval val@(String _) = return val 
-eval val@(Float _) = return val 
-eval val@(Character _) = return val 
-eval val@(Number _) = return val 
-eval val@(Bool _) = return val 
-eval val@(Atom _) = return val 
-eval (List [Atom "quote", val]) = return val 
-eval (List [Atom "if", pred, conseq, alt]) = do 
-    result <- eval pred 
+eval :: Env -> LispVal -> IOThrowsError LispVal
+eval env val@(String _) = return val 
+eval env val@(Float _) = return val 
+eval env val@(Character _) = return val 
+eval env val@(Number _) = return val 
+eval env val@(Bool _) = return val 
+eval env val@(Atom id) = getVar env id
+eval env (List [Atom "quote", val]) = return val 
+eval env (List [Atom "if", pred, conseq, alt]) = do 
+    result <- eval env pred 
     case result of 
-        Bool False -> eval alt 
-        otherwise -> eval conseq 
-eval (List (Atom func : args)) = mapM eval args >>= apply func
-eval val@(List _) = return val
-eval val@(DottedList _ _) = return val 
+        Bool False -> eval env alt 
+        otherwise -> eval env conseq 
+eval env (List [Atom "set!", Atom var, form]) = eval env form >>= setVar env var 
+eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var 
+eval env (List (Atom func : args)) = mapM (eval env) args >>= liftThrows . apply func
+eval env val@(List _) = return val
+eval env val@(DottedList _ _) = return val 
 -- eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 apply :: String -> [LispVal] -> ThrowsError LispVal
