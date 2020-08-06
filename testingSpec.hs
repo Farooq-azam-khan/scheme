@@ -2,6 +2,7 @@ module ParsingSpec where
 
 import Test.Hspec
 import Main hiding (main)
+import Parser
 
 main :: IO () 
 main = hspec $ do 
