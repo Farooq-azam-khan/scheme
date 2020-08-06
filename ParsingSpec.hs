@@ -8,84 +8,98 @@ main = hspec $ do
     describe "Find Value for valid input" $ do 
         -- currently broken
     --     it "should ignore whitespace to any given input" $
-    --         readExpr "   !" `shouldBe` "Found Value"
+    --         lispExecute "   !" `shouldBe` "Found Value"
         
         it "should find '!'" $ 
-            readExpr "!" `shouldBe` Atom "!"
+            lispExecute "!" `shouldBe` "Atom \"!\""
         
         it "should find (String \"abc\")" $ 
-            readExpr "abc" `shouldBe` Atom "abc"
+            lispExecute "abc" `shouldBe` "Atom \"abc\""
 
         it "should find (String \"abc def\")" $ 
-            readExpr "abc def" `shouldBe` Atom "abc"
+            lispExecute "abc def" `shouldBe` "Atom \"abc\""
         
         it "should find True #t" $ 
-            readExpr "#t" `shouldBe` Bool True
+            lispExecute "#t" `shouldBe` "Bool True"
         
         it "should find False #f" $ 
-            readExpr "#f" `shouldBe` Bool False
+            lispExecute "#f" `shouldBe` "Bool False"
 
         it "should read tab (\\t)" $
-            readExpr "\"\t\"" `shouldBe` String "\t"
+            lispExecute "\"\t\"" `shouldBe` "String \"\\t\""
         
         it "should read carriage return (\\r)" $
-            readExpr "\"\r\"" `shouldBe` String "\r"
+            lispExecute "\"\r\"" `shouldBe` "String \"\\r\""
 
         it "should read new line (\\n)" $
-            readExpr "\"\n\"" `shouldBe` String "\n"
+            lispExecute "\"\n\"" `shouldBe` "String \"\\n\""
         
         it "should read backslash (\\)" $
-            readExpr "\" \\\\ \"" `shouldBe` String " \\ "
+            lispExecute "\" \\\\ \"" `shouldBe` "String \" \\\\ \""
 
         it "should read decimal number 123" $
-            readExpr "123" `shouldBe` Number 123
-        
+            lispExecute "123" `shouldBe` "Number 123"
+
         it "should read explicit decimal number 123" $
-            readExpr "#d123" `shouldBe` Number 123
+            lispExecute "#d123" `shouldBe` "Number 123"
         
         it "should read hex ABC" $
-            readExpr "#xABC" `shouldBe` Number 291
+            lispExecute "#xABC" `shouldBe` "Number 291"
         
         it "should read oct 123" $
-            readExpr "#o123" `shouldBe` Number 83
+            lispExecute "#o123" `shouldBe` "Number 83"
         
         it "should read bin 11" $
-            readExpr "#b11" `shouldBe` Number 3
+            lispExecute "#b11" `shouldBe` "Number 3"
 
         it "should read a float" $
-            readExpr "123.123" `shouldBe` Float 123.123
+            lispExecute "123.123" `shouldBe` "Float 123.123"
         
         it "should parse List (123 123 123)" $ 
-            readExpr "(123 123 123)" `shouldBe` List [Number 123,Number 123,Number 123]
+            lispExecute "(123 123 123)" `shouldBe` "List [Number 123,Number 123,Number 123]"
 
         it "should parse Nested List" $ 
-            readExpr "(a (nested) test)" `shouldBe` List [Atom "a",List [Atom "nested"],Atom "test"]
+            lispExecute "(\"a\" (nested) test)" `shouldBe` "List [String \"a\",List [Atom \"nested\"],Atom \"test\"]"
             
         it "should parse DottedList (123 123 123)" $ 
-            readExpr "(123 123 . 123)" `shouldBe` DottedList [Number 123,Number 123] (Number 123)
+            lispExecute "(123 123 . 123)" `shouldBe` "DottedList [Number 123,Number 123] (Number 123)"
         
+        -- todo: eval is messing with it and ' is being parsed properly 
         it "should parse Quotted" $ 
-            readExpr "'abcdef" `shouldBe` List [Atom "quote",Atom "abcdef"]
+            lispExecute "'abcdef" `shouldBe` "List [Atom \"quote\",Atom \"abcdef\"]"
 
         it "should parse list and dotted list" $ 
-            readExpr "(a (dotted . list) test)" `shouldBe` List [Atom "a",DottedList [Atom "dotted"] (Atom "list"),Atom "test"]
+            lispExecute "(\"a\" (dotted . list) test)" `shouldBe` "List [String \"a\",DottedList [Atom \"dotted\"] (Atom \"list\"),Atom \"test\"]"
         
     describe "Evaluate proper input and output" $ do 
 
         it "should evaluate (+ 2 2)" $
-            (eval . readExpr) "(+ 2 2)" `shouldBe` Number 4
+            lispExecute "(+ 2 2)" `shouldBe` "Number 4"
 
         it "should evaluate (- 2 2)" $
-            (eval . readExpr) "(- 2 2)" `shouldBe` Number 0
+            lispExecute "(- 2 2)" `shouldBe` "Number 0"
             
         it "should evaluate (* 2 2)" $
-            (eval . readExpr) "(* 2 2)" `shouldBe` Number 4
+            lispExecute "(* 2 2)" `shouldBe` "Number 4"
         
         it "should evaluate more than 2 numbers (+ 1 2 3)" $
-            (eval . readExpr) "(+ 1 2 3)" `shouldBe` Number 6
+            lispExecute "(+ 1 2 3)" `shouldBe` "Number 6"
 
         it "should check equlity (eq? 1 1)" $
-            (eval . readExpr) "(eq? 1 1)" `shouldBe` Bool True 
-            
+            lispExecute "(= 1 1)" `shouldBe` "Bool True"
+    
+    describe "Spec can  evaluate errors properly" $ do 
+        it "should evaluate (+ 2 \"two\")" $ 
+            lispExecute "(+ 2 \"two\")" `shouldBe` "TypeMismatch \"number\" (String \"two\")"
+    
+    describe "Spec can pattern match eval conditions" $ do 
+        it "should check if true conditions" $
+            lispExecute "(if (< 1 2) #t #f)" `shouldBe` "Bool True"
+
+        it "should check if false conditions" $
+            lispExecute "(if (> 1 2) #t #f)" `shouldBe` "Bool False"
+
+        it "should check if condition and return string" $ 
+            lispExecute "(if (= 1 2) \"equal\" \"not equal\")" `shouldBe` "String \"not equal\""
 
             
