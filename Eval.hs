@@ -35,6 +35,7 @@ apply func args = maybe (throwError $ NotFunction "Unrecognized primitive functi
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives= [
     ("+", numericBinop (+)),
+    ("addFloat", floatBinop (+)),
     ("-", numericBinop (-)),
     ("/", numericBinop div),
     ("*", numericBinop (*)),
@@ -99,6 +100,10 @@ unaryop :: (LispVal -> LispVal) -> [LispVal] -> ThrowsError LispVal
 unaryop f [] = throwError $ NumArgs 1 [] 
 unaryop f [v] = return $ f v 
 
+floatBinop :: (Double -> Double -> Double) -> [LispVal] -> ThrowsError LispVal
+floatBinop op [] = throwError $ NumArgs 2 [] 
+floatBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal 
+floatBinop op params = mapM unpackFloat params >>= return . Float . foldl1 op 
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
 numericBinop op [] = throwError $ NumArgs 2 [] 
@@ -128,6 +133,12 @@ unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (Number n) = return n
 unpackNum (List [n]) = unpackNum n
 unpackNum notNum = throwError $ TypeMismatch "number" notNum
+
+unpackFloat :: LispVal -> ThrowsError Double 
+unpackFloat (Float n) = return n
+unpackFloat (List [n]) = unpackFloat n
+unpackFloat notNum = throwError $ TypeMismatch "number" notNum
+
 
 unpackStr :: LispVal -> ThrowsError String 
 unpackStr (String s) = return s 

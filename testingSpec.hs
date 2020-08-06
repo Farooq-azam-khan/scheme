@@ -72,7 +72,7 @@ main = hspec $ do
         it "should parse list and dotted list" $ 
             lispExecute "(\"a\" (dotted . list) test)" `shouldBe` "List [String \"a\",DottedList [Atom \"dotted\"] (Atom \"list\"),Atom \"test\"]"
         
-    describe "Evaluate proper input and output" $ do 
+    describe "Evaluate proper input and output evaluation" $ do 
 
         it "should evaluate (+ 2 2)" $
             lispExecute "(+ 2 2)" `shouldBe` "Number 4"
@@ -88,6 +88,9 @@ main = hspec $ do
 
         it "should check equlity (eq? 1 1)" $
             lispExecute "(= 1 1)" `shouldBe` "Bool True"
+        
+        it "should evaluate floats" $
+            lispExecute "(addFloat 2.1 2.1)" `shouldBe` "Float 4.2"
     
     describe "Spec can  evaluate errors properly" $ do 
         it "should evaluate (+ 2 \"two\")" $ 
