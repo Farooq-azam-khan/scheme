@@ -80,9 +80,12 @@ main = hspec $ do
             
         it "should evaluate (* 2 2)" $
             (eval . readExpr) "(* 2 2)" `shouldBe` Number 4
+        
+        it "should evaluate more than 2 numbers (+ 1 2 3)" $
+            (eval . readExpr) "(+ 1 2 3)" `shouldBe` Number 6
 
-        -- it "should check equlity (eq? 1 1)" $
-        --     (eval . readExpr) "(eq? 1 1)" `shouldBe` Bool True 
+        it "should check equlity (eq? 1 1)" $
+            (eval . readExpr) "(eq? 1 1)" `shouldBe` Bool True 
             
 
             

@@ -5,10 +5,10 @@ import Control.Monad -- for liftM
 import Numeric
 
 main :: IO()
-main = getArgs >>= print.eval.readExpr.head
-    -- gets the first argument and ignores the rest
-    -- (expr:_) <- getArgs 
-    -- putStrLn $ readExpr expr
+main = getArgs >>= print.lispExecute.head
+
+lispExecute :: String -> LispVal
+lispExecute = eval.readExpr
 
 -- =========== datatypes ===========
 data LispVal = Atom String 
@@ -88,10 +88,6 @@ parseAtom = do
     rest <- many (letter <|> digit <|> symbol)
     let atom = first:rest 
     return $ Atom atom 
-    -- $ case atom of 
-    --     "#t" -> Bool True 
-    --     "#f" -> Bool False 
-    --     _ -> Atom atom 
 
 parseBool :: Parser LispVal
 parseBool = do
@@ -187,8 +183,14 @@ primitives= [
     ("string?", unaryop isString),
     ("boolean?", unaryop isBoolean), 
     ("list?", unaryop isList),
-    ("not", unaryop invert)
+    ("not", unaryop invert), 
+    ("eq?", binaryBinop (==)), 
+    ("symbol?", unaryop isSymbol)
     ]
+
+isSymbol :: LispVal -> LispVal
+isSymbol (Atom _) = Bool True 
+isSymbol _ = Bool False 
 
 isList :: LispVal -> LispVal
 isList (List _) = Bool True
@@ -219,12 +221,18 @@ unaryop f [v] = f v
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
 numericBinop op params = Number $ foldl1 op $ map unpackNum params
 
+binaryBinop :: (Bool -> Bool -> Bool) -> [LispVal] -> LispVal
+binaryBinop op params = Bool $ foldl1 op $ map unpackBool params 
+
+unpackBool :: LispVal -> Bool 
+unpackBool (Bool v) = v 
+unpackBool _ = False 
 
 unpackNum :: LispVal -> Integer
 unpackNum (Number n) = n
-unpackNum (String n) = let parsed = reads n :: [(Integer, String)] in 
-                           if null parsed 
-                              then 0
-                              else fst $ parsed !! 0
+-- unpackNum (String n) = let parsed = reads n :: [(Integer, String)] in 
+--                            if null parsed 
+--                               then 0
+--                               else fst $ parsed !! 0
 unpackNum (List [n]) = unpackNum n
 unpackNum _ = 0
