@@ -10,12 +10,22 @@ data LispVal = Atom String
                 | DottedList [LispVal] LispVal 
                 | Number Integer 
                 | BinaryNumber String 
+                | Float Float 
                 | String String 
                 | Bool Bool 
                 deriving (Show)
 
 symbol :: Parser Char 
 symbol = oneOf "!$%&|*+-/:<=>?@^_~" 
+
+binary_digits :: Parser Char 
+binary_digits = oneOf "01" 
+
+oct_digits :: Parser Char 
+oct_digits = oneOf "01234567" 
+
+hex_digits :: Parser Char 
+hex_digits = oneOf "0123456789abcdefABCDEF"
 
 parseString :: Parser LispVal 
 parseString = do 
@@ -41,12 +51,6 @@ parseNumber = parseDecimal <|> parseBinaryHexOrOct
 
 parseDecimal :: Parser LispVal 
 parseDecimal = liftM (Number . read) $ many1 digit 
-{-parseNumber = do 
-    opt <- many1 digit 
-    return $ (Number . read) opt 
--}
--- parseNumber = many1 digit >>=  (return . Number . read )
-
 
 parseBinaryHexOrOct :: Parser LispVal 
 parseBinaryHexOrOct = do 
@@ -55,17 +59,28 @@ parseBinaryHexOrOct = do
     spaces 
     case which_base of 
         'b' -> do 
-            number_as_string <- many1 (oneOf "01") 
+            number_as_string <- many1 binary_digits
             return $ Number $ bin_to_dec number_as_string 
         'o' -> do 
-            number_as_string <- many1 (oneOf "01234567")
+            number_as_string <- many1 oct_digits 
             return $ Number $ oct_to_dec number_as_string 
         'x' -> do 
-            number_as_string <- many1 (oneOf "0123456789abcdefABCDEF") 
+            number_as_string <- many1 hex_digits 
             return $ Number $ hex_to_dec number_as_string
+
+parseFloat :: Parser LispVal 
+parseFloat = do 
+    left <- many1 digit 
+    char '.' 
+    right <- many1 digit 
+    return $ Float $ get_float  (left ++ "." ++ right) 
+
+get_float :: String -> Float 
+get_float x = fst $ readFloat x !! 0 
 
 bin_to_dec :: String -> Integer 
 bin_to_dec [] = 0 
+
 bin_to_dec (x:xs) = read [x] + 2 * bin_to_dec xs 
 
 hex_to_dec :: String -> Integer 
@@ -79,6 +94,7 @@ language_name = "lisp"
 
 scheme_parser :: Parser LispVal 
 scheme_parser = parseAtom <|> 
+                parseFloat <|> 
                 parseNumber <|> 
                 parseBool <|>
                 parseString 
