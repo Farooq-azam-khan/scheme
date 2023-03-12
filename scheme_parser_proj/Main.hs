@@ -30,7 +30,7 @@ hex_digits = oneOf "0123456789abcdefABCDEF"
 parseString :: Parser LispVal 
 parseString = do 
     char '"' 
-    x <- many (noneOf "\"") 
+    x <- many $ (char '\\' >> oneOf "\\\"" >>= return) <|> noneOf "\"\\"
     char '"' 
     return $ String x 
 
