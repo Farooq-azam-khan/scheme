@@ -27,10 +27,21 @@ oct_digits = oneOf "01234567"
 hex_digits :: Parser Char 
 hex_digits = oneOf "0123456789abcdefABCDEF"
 
+escape_special_chars :: Parser Char 
+escape_special_chars = do 
+    char '\\' 
+    x <- oneOf "\\\"ntr" 
+    return $ case x of 
+        'n' -> '\n' 
+        'r' -> '\r' 
+        't' -> '\t' 
+        '\\' -> x 
+        '"' -> x 
+
 parseString :: Parser LispVal 
 parseString = do 
     char '"' 
-    x <- many $ (char '\\' >> oneOf "\\\"" >>= return) <|> noneOf "\"\\"
+    x <- many $ escape_special_chars <|> noneOf "\"\\"
     char '"' 
     return $ String x 
 
