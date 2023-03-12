@@ -35,6 +35,7 @@ parseBool :: Parser LispVal
 parseBool = do 
     char '#' 
     (char 't' >> return (Bool True)) <|> (char 'f' >> return (Bool False))
+
 parseNumber :: Parser LispVal 
 parseNumber = parseDecimal <|> parseBinaryHexOrOct 
 
@@ -55,13 +56,17 @@ parseBinaryHexOrOct = do
     case which_base of 
         'b' -> do 
             number_as_string <- many1 (oneOf "01") 
-            return $ BinaryNumber number_as_string
+            return $ Number $ bin_to_dec number_as_string 
         'o' -> do 
             number_as_string <- many1 (oneOf "01234567")
             return $ Number $ oct_to_dec number_as_string 
         'x' -> do 
             number_as_string <- many1 (oneOf "0123456789abcdefABCDEF") 
             return $ Number $ hex_to_dec number_as_string
+
+bin_to_dec :: String -> Integer 
+bin_to_dec [] = 0 
+bin_to_dec (x:xs) = read [x] + 2 * bin_to_dec xs 
 
 hex_to_dec :: String -> Integer 
 hex_to_dec x = fst $ readHex x !! 0
