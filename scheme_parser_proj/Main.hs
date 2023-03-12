@@ -38,7 +38,7 @@ parseNumber :: Parser LispVal
     opt <- many1 digit 
     return $ (Number . read) opt 
 -}
-parseNumber = many1 digit >>=  (\x -> return $ (Number . read ) x)
+parseNumber = many1 digit >>=  (return . Number . read )
 language_name :: String 
 language_name = "lisp" 
 
