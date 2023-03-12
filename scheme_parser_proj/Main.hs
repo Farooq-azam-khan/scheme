@@ -3,20 +3,19 @@ module Main where
 import Text.ParserCombinators.Parsec hiding (spaces) 
 import System.Environment 
 import Control.Monad 
+import Numeric 
 
 data LispVal = Atom String 
                 | List [LispVal]
                 | DottedList [LispVal] LispVal 
                 | Number Integer 
                 | BinaryNumber String 
-                | OctNumber String 
-                | HexNumber String 
                 | String String 
                 | Bool Bool 
                 deriving (Show)
 
 symbol :: Parser Char 
-symbol = oneOf "!#$%&|*+-/:<=>?@^_~" 
+symbol = oneOf "!$%&|*+-/:<=>?@^_~" 
 
 parseString :: Parser LispVal 
 parseString = do 
@@ -30,38 +29,23 @@ parseAtom = do
     first <- letter <|> symbol 
     rest <- many (letter <|> digit <|> symbol) 
     let atom = first:rest 
-    return $ case atom of 
-                "#t" -> Bool True 
-                "#f" -> Bool False 
-                _ -> Atom atom 
+    return $ Atom atom 
 
+parseBool :: Parser LispVal 
+parseBool = do 
+    char '#' 
+    (char 't' >> return (Bool True)) <|> (char 'f' >> return (Bool False))
 parseNumber :: Parser LispVal 
-parseNumber = liftM (Number . read) $ many1 digit 
+parseNumber = parseDecimal <|> parseBinaryHexOrOct 
+
+parseDecimal :: Parser LispVal 
+parseDecimal = liftM (Number . read) $ many1 digit 
 {-parseNumber = do 
     opt <- many1 digit 
     return $ (Number . read) opt 
 -}
 -- parseNumber = many1 digit >>=  (return . Number . read )
 
-
--- e.g. 010010
-parseBinaryNumber :: Parser LispVal 
-parseBinaryNumber = do 
-    string "#b " 
-    number_as_string <- many1 (oneOf "01")
-    return $ BinaryNumber number_as_string
-
-parseOctNumber :: Parser LispVal 
-parseOctNumber = do 
-    string "#o " 
-    number_as_string <- many1 (oneOf "01234567") 
-    return $ OctNumber number_as_string
-
-parseHexNumber :: Parser LispVal 
-parseHexNumber = do 
-    string "#x "
-    number_as_string <- many1 (oneOf "0123456789abcdefABCDEF") 
-    return $ HexNumber number_as_string
 
 parseBinaryHexOrOct :: Parser LispVal 
 parseBinaryHexOrOct = do 
@@ -73,20 +57,25 @@ parseBinaryHexOrOct = do
             number_as_string <- many1 (oneOf "01") 
             return $ BinaryNumber number_as_string
         'o' -> do 
-            number_as_string <- many1 (oneOf "01234567") 
-            return $ OctNumber number_as_string
+            number_as_string <- many1 (oneOf "01234567")
+            return $ Number $ oct_to_dec number_as_string 
         'x' -> do 
             number_as_string <- many1 (oneOf "0123456789abcdefABCDEF") 
-            return $ HexNumber number_as_string
+            return $ Number $ hex_to_dec number_as_string
 
+hex_to_dec :: String -> Integer 
+hex_to_dec x = fst $ readHex x !! 0
+
+oct_to_dec :: String -> Integer 
+oct_to_dec x = fst $ readOct x !! 0
             
 language_name :: String 
 language_name = "lisp" 
 
 scheme_parser :: Parser LispVal 
-scheme_parser = parseBinaryHexOrOct <|> 
+scheme_parser = parseAtom <|> 
                 parseNumber <|> 
-                parseAtom <|> 
+                parseBool <|>
                 parseString 
 
 readExpr :: String -> String 
