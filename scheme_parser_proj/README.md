@@ -16,4 +16,16 @@
 [ ] E3 
 
 # Chapter 3
-[ ] 
+[x] lesson 
+[ ] E1 
+- e1 tests: 
+```
+(symbol? 'foo)                  ===>  #t
+(symbol? (car '(a b)))          ===>  #t
+(symbol? "bar")                 ===>  #f
+(symbol? 'nil)                  ===>  #t
+(symbol? '())                   ===>  #f
+(symbol? #f)             ===>  #f
+```
+[ ] E2 
+[ ] E3 

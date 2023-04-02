@@ -50,8 +50,30 @@ primitives = [("+", numericBinop (+)),
               ("/", numericBinop div),
               ("mod", numericBinop mod),
               ("quotient", numericBinop quot),
-              ("remainder", numericBinop rem)
+              ("remainder", numericBinop rem),
+              ("symbol?", unaryOp symbolOp),
+              ("string?", unaryOp stringOp),
+              ("number?", unaryOp numberOp)
              ]
+
+{-
+ - List [Atom "symbol?",List [Atom "quote",List [Atom "a",Atom "b"]]]
+ -}
+unaryOp :: (LispVal -> LispVal) -> [LispVal] -> LispVal 
+unaryOp op [v] = op v 
+
+symbolOp :: LispVal -> LispVal  
+symbolOp (Atom _) = Bool True 
+symbolOp _ = Bool False 
+
+numberOp:: LispVal -> LispVal  
+numberOp (Number _) = Bool True 
+numberOp _ = Bool False 
+
+stringOp :: LispVal -> LispVal  
+stringOp (String _) = Bool True 
+stringOp _ = Bool False 
+
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal 
 numericBinop op params = Number $ foldl1 op $ map unpackNum params  
@@ -197,9 +219,9 @@ scheme_parser = parseAtom
                 <|> do 
                     x <- try parseFloat <|> parseNumber 
                     return x 
+                <|> parseBool 
                 <|> parseQuoted
                 <|> parseCharacter 
-                <|> parseBool 
                 <|> parseString 
                 <|> do 
                     char '('
