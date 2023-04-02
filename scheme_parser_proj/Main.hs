@@ -53,14 +53,21 @@ primitives = [("+", numericBinop (+)),
               ("remainder", numericBinop rem),
               ("symbol?", unaryOp symbolOp),
               ("string?", unaryOp stringOp),
-              ("number?", unaryOp numberOp)
+              ("number?", unaryOp numberOp),
+              ("symbol->string", unaryOp symbToStr),
+              ("string->symbol", unaryOp strToSymb)
              ]
 
-{-
- - List [Atom "symbol?",List [Atom "quote",List [Atom "a",Atom "b"]]]
- -}
 unaryOp :: (LispVal -> LispVal) -> [LispVal] -> LispVal 
 unaryOp op [v] = op v 
+
+symbToStr :: LispVal -> LispVal 
+symbToStr (Atom val) = String val 
+symbToStr _ = String ""
+
+strToSymb :: LispVal -> LispVal
+strToSymb (String val) = Atom val 
+strToSymb _ = String ""
 
 symbolOp :: LispVal -> LispVal  
 symbolOp (Atom _) = Bool True 
