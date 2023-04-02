@@ -13,7 +13,9 @@ data LispVal = Atom String
                 | String String 
                 | Character Char
                 | Bool Bool 
-                -- deriving (Show)
+                deriving (Show)
+
+-- instance Show LispVal where show = showVal
 
 showVal :: LispVal -> String 
 showVal (String contents) = "\"" ++ contents ++ "\"" 
@@ -30,7 +32,34 @@ unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal -- referred to as point-free style (i.e. without any arguments needs) 
 -- unwordsList lst = unwords $ map showVal lst 
 
-instance Show LispVal where show = showVal
+eval :: LispVal -> LispVal 
+eval val@(String _) = val 
+eval val@(Float _) = val 
+eval val@(Number _) = val 
+eval val@(Bool _) = val 
+eval (List [Atom "quote", val]) = val 
+eval (List (Atom func : args)) = apply func $ map eval args 
+
+apply :: String -> [LispVal] -> LispVal 
+apply func args = maybe (Bool False) ($ args) $ lookup func primitives
+
+primitives :: [(String, [LispVal] -> LispVal)]
+primitives = [("+", numericBinop (+)),
+              ("-", numericBinop (-)),
+              ("*", numericBinop (*)),
+              ("/", numericBinop div),
+              ("mod", numericBinop mod),
+              ("quotient", numericBinop quot),
+              ("remainder", numericBinop rem)
+             ]
+
+numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal 
+numericBinop op params = Number $ foldl1 op $ map unpackNum params  
+
+unpackNum :: LispVal -> Integer 
+unpackNum (Number n) = n 
+unpackNum (List [n]) = unpackNum n 
+unpackNum _ = 0 
 
 symbol :: Parser Char 
 symbol = oneOf "!$%&|*+-/:<=>?@^_~" 
@@ -161,12 +190,15 @@ parseQuoted = do
 language_name :: String 
 language_name = "lisp" 
 
+
+-- parseExpr
 scheme_parser :: Parser LispVal 
 scheme_parser = parseAtom 
-                <|> parseFloat 
+                <|> do 
+                    x <- try parseFloat <|> parseNumber 
+                    return x 
                 <|> parseQuoted
                 <|> parseCharacter 
-                <|> parseNumber 
                 <|> parseBool 
                 <|> parseString 
                 <|> do 
@@ -175,10 +207,10 @@ scheme_parser = parseAtom
                     char ')' 
                     return x 
 
-readExpr :: String -> String 
+readExpr :: String -> LispVal 
 readExpr input = case parse scheme_parser language_name input of 
-                    Left err -> "No Match: " ++ show err 
-                    Right val -> "Found Value: " ++ show val 
+                    Left err -> String $ "No Match: " ++ show err 
+                    Right val -> val 
 
 spaces :: Parser ()
 spaces = skipMany1 space -- could use: lexeme  
@@ -187,7 +219,7 @@ main :: IO ()
 main = do 
     args <- getArgs 
     if length args < 1 then putStrLn "Provide args" else 
-            putStrLn $ readExpr $args !!0
+            putStrLn . show . eval . readExpr $ args !! 0
 {-    case length args > 1 of 
         True -> do
             (expr:_) <- args 
