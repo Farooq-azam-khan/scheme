@@ -1,4 +1,5 @@
 `cabal run scheme-parser-proj`
+
 # Chapter 2
 ## Exercises pt.1 
 [x] E1

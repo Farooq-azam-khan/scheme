@@ -9,12 +9,28 @@ data LispVal = Atom String
                 | List [LispVal]
                 | DottedList [LispVal] LispVal 
                 | Number Integer 
-                | BinaryNumber String 
                 | Float Float 
                 | String String 
                 | Character Char
                 | Bool Bool 
-                deriving (Show)
+                -- deriving (Show)
+
+showVal :: LispVal -> String 
+showVal (String contents) = "\"" ++ contents ++ "\"" 
+showVal (Atom name) = name 
+showVal (Number contents) = show contents 
+showVal (Float f) = show f 
+showVal (Character ch) = show ch 
+showVal (Bool True) = "#t" 
+showVal (Bool False) = "#f" 
+showVal (List contents) = "(" ++ unwordsList contents ++ ")" 
+showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
+
+unwordsList :: [LispVal] -> String 
+unwordsList = unwords . map showVal -- referred to as point-free style (i.e. without any arguments needs) 
+-- unwordsList lst = unwords $ map showVal lst 
+
+instance Show LispVal where show = showVal
 
 symbol :: Parser Char 
 symbol = oneOf "!$%&|*+-/:<=>?@^_~" 
