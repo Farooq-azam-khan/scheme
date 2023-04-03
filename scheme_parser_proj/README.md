@@ -15,17 +15,20 @@
 [ ] E2 
 [ ] E3 
 
-# Chapter 3
+# Chapter 3 - Evaluation, Part 1
 [x] lesson 
-[ ] E1 
+[x] E1 
 - e1 tests: 
 ```
 (symbol? 'foo)                  ===>  #t
-(symbol? (car '(a b)))          ===>  #t
+(symbol? (car '(a b)))          ===>  #t -- not passing 
 (symbol? "bar")                 ===>  #f
 (symbol? 'nil)                  ===>  #t
 (symbol? '())                   ===>  #f
 (symbol? #f)             ===>  #f
 ```
-[ ] E2 
-[ ] E3 
+[x] E2 
+[x] E3 
+
+# Chapter 4, Error Checking and Exceptions 
+

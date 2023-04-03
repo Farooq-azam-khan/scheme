@@ -222,11 +222,11 @@ language_name = "lisp"
 
 -- parseExpr
 scheme_parser :: Parser LispVal 
-scheme_parser = parseAtom 
+scheme_parser = parseBool 
+                <|> parseAtom 
                 <|> do 
                     x <- try parseFloat <|> parseNumber 
                     return x 
-                <|> parseBool 
                 <|> parseQuoted
                 <|> parseCharacter 
                 <|> parseString 
