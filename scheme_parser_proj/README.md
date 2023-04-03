@@ -31,4 +31,4 @@
 [x] E3 
 
 # Chapter 4, Error Checking and Exceptions 
-
+* [x] 
