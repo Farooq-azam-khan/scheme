@@ -50,19 +50,26 @@ type ThrowsError = Either LispError
 trapError :: (MonadError a m, Show a) => m String -> m String
 trapError action = catchError action (return . show)
 
+extractValue :: ThrowsError a -> a 
+extractValue (Right val) = val 
+
 -- ****** EVAL *******
-eval :: LispVal -> LispVal 
-eval val@(String _) = val 
-eval val@(Float _) = val 
-eval val@(Number _) = val 
-eval val@(Bool _) = val 
-eval (List [Atom "quote", val]) = val 
-eval (List (Atom func : args)) = apply func $ map eval args 
+eval :: LispVal -> ThrowsError LispVal 
+eval val@(String _) = return val 
+eval val@(Float _) = return val 
+eval val@(Number _) = return val 
+eval val@(Bool _) = return val 
+eval (List [Atom "quote", val]) = return val 
+eval (List (Atom func : args)) = mapM eval args >>= apply func
+eval badForm = throwError $ BadSpecialForm "Unrecognized Special Form" badForm 
 
-apply :: String -> [LispVal] -> LispVal 
-apply func args = maybe (Bool False) ($ args) $ lookup func primitives
+apply :: String -> [LispVal] -> ThrowsError LispVal 
+apply func args = maybe 
+            (throwError $ NotFunction "Unrecognized Primitive Function args" func) 
+            ($ args) 
+            (lookup func primitives)
 
-primitives :: [(String, [LispVal] -> LispVal)]
+primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
               ("*", numericBinop (*)),
@@ -77,37 +84,40 @@ primitives = [("+", numericBinop (+)),
               ("string->symbol", unaryOp strToSymb)
              ]
 
-unaryOp :: (LispVal -> LispVal) -> [LispVal] -> LispVal 
-unaryOp op [v] = op v 
+unaryOp :: (LispVal -> LispVal) -> [LispVal] -> ThrowsError LispVal 
+unaryOp op [] = throwError $  NumArgs 1 [] 
+unaryOp op [v] = return $ op v 
 
 symbToStr :: LispVal -> LispVal 
-symbToStr (Atom val) = String val 
-symbToStr _ = String ""
+symbToStr (Atom val) =  String val 
+symbToStr _ = String "" -- throwError $ TypeMismatch "atom" invalid_arg
 
 strToSymb :: LispVal -> LispVal
 strToSymb (String val) = Atom val 
-strToSymb _ = String ""
+strToSymb _ = String "" -- throwError $ TypeMismatch "string" invalid_arg
 
 symbolOp :: LispVal -> LispVal  
 symbolOp (Atom _) = Bool True 
-symbolOp _ = Bool False 
+symbolOp _ = String "" -- throwError $ TypeMismatch "atom" invalid_arg
 
 numberOp:: LispVal -> LispVal  
 numberOp (Number _) = Bool True 
-numberOp _ = Bool False 
+numberOp _ = String "" -- throwError $ TypeMismatch "number" invalid_arg
 
 stringOp :: LispVal -> LispVal  
 stringOp (String _) = Bool True 
-stringOp _ = Bool False 
+stringOp _ = String "" --  throwError $ TypeMismatch "string" invalid_arg
 
 
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal 
-numericBinop op params = Number $ foldl1 op $ map unpackNum params  
+numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal 
+numericBinop op [] = throwError $ NumArgs 2 []  
+numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
+numericBinop op params =  mapM unpackNum params  >>= return . Number . foldl1 op 
 
-unpackNum :: LispVal -> Integer 
-unpackNum (Number n) = n 
+unpackNum :: LispVal -> ThrowsError Integer 
+unpackNum (Number n) = return n 
 unpackNum (List [n]) = unpackNum n 
-unpackNum _ = 0 
+unpackNum notNum = throwError $ TypeMismatch "number" notNum 
 
 symbol :: Parser Char 
 symbol = oneOf "!$%&|*+-/:<=>?@^_~" 
@@ -255,10 +265,10 @@ scheme_parser = parseBool
                     char ')' 
                     return x 
 
-readExpr :: String -> LispVal 
+readExpr :: String -> ThrowsError LispVal 
 readExpr input = case parse scheme_parser language_name input of 
-                    Left err -> String $ "No Match: " ++ show err 
-                    Right val -> val 
+                    Left err -> throwError $ Parser err -- $ "No Match: " ++ show err 
+                    Right val -> return val 
 
 spaces :: Parser ()
 spaces = skipMany1 space -- could use: lexeme  
@@ -266,8 +276,11 @@ spaces = skipMany1 space -- could use: lexeme
 main :: IO ()
 main = do 
     args <- getArgs 
-    if length args < 1 then putStrLn "Provide args" else 
-            putStrLn . show . eval . readExpr $ args !! 0
+    if length args < 1 then putStrLn "Provide args" else do 
+        evaled <- return $ liftM show $ readExpr (args !! 0) >>= eval 
+        putStrLn $ extractValue $ trapError evaled 
+
+    
 {-    case length args > 1 of 
         True -> do
             (expr:_) <- args 
