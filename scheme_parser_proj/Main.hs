@@ -6,6 +6,7 @@ import Control.Monad
 import Numeric 
 import Control.Monad.Except 
 
+-- ****** LISP VAL *******
 data LispVal = Atom String 
                 | List [LispVal]
                 | DottedList [LispVal] LispVal 
@@ -33,6 +34,23 @@ unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal -- referred to as point-free style (i.e. without any arguments needs) 
 -- unwordsList lst = unwords $ map showVal lst 
 
+-- ****** LISP ERROR *******
+data LispError = NumArgs Integer [LispVal] 
+                | TypeMismatch String LispVal 
+                | Parser ParseError 
+                | BadSpecialForm String LispVal 
+                | NotFunction String String 
+                | UnboundVar String String 
+                | Default String 
+                deriving (Show)
+
+type ThrowsError = Either LispError 
+-- will curry LispVal since type variable can curry types 
+
+trapError :: (MonadError a m, Show a) => m String -> m String
+trapError action = catchError action (return . show)
+
+-- ****** EVAL *******
 eval :: LispVal -> LispVal 
 eval val@(String _) = val 
 eval val@(Float _) = val 
