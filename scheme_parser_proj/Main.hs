@@ -4,6 +4,7 @@ import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment 
 import Control.Monad 
 import Numeric 
+import Control.Monad.Except 
 
 data LispVal = Atom String 
                 | List [LispVal]
