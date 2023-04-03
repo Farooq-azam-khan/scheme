@@ -84,29 +84,29 @@ primitives = [("+", numericBinop (+)),
               ("string->symbol", unaryOp strToSymb)
              ]
 
-unaryOp :: (LispVal -> LispVal) -> [LispVal] -> ThrowsError LispVal 
+unaryOp :: (LispVal -> ThrowsError LispVal) -> [LispVal] -> ThrowsError LispVal 
 unaryOp op [] = throwError $  NumArgs 1 [] 
-unaryOp op [v] = return $ op v 
+unaryOp op [v] = op v >>= return 
 
-symbToStr :: LispVal -> LispVal 
-symbToStr (Atom val) =  String val 
-symbToStr _ = String "" -- throwError $ TypeMismatch "atom" invalid_arg
+symbToStr :: LispVal -> ThrowsError LispVal 
+symbToStr (Atom val) = return $ String val 
+symbToStr invalid_arg = throwError $ TypeMismatch "atom" invalid_arg
 
-strToSymb :: LispVal -> LispVal
-strToSymb (String val) = Atom val 
-strToSymb _ = String "" -- throwError $ TypeMismatch "string" invalid_arg
+strToSymb :: LispVal -> ThrowsError LispVal
+strToSymb (String val) = return $ Atom val 
+strToSymb invalid_arg =  throwError $ TypeMismatch "string" invalid_arg
 
-symbolOp :: LispVal -> LispVal  
-symbolOp (Atom _) = Bool True 
-symbolOp _ = String "" -- throwError $ TypeMismatch "atom" invalid_arg
+symbolOp :: LispVal -> ThrowsError LispVal
+symbolOp (Atom _) = return $ Bool True 
+symbolOp invalid_arg = throwError $ TypeMismatch "atom" invalid_arg
 
-numberOp:: LispVal -> LispVal  
-numberOp (Number _) = Bool True 
-numberOp _ = String "" -- throwError $ TypeMismatch "number" invalid_arg
+numberOp:: LispVal -> ThrowsError LispVal  
+numberOp (Number _) = return $ Bool True 
+numberOp invalid_arg = throwError $ TypeMismatch "number" invalid_arg
 
-stringOp :: LispVal -> LispVal  
-stringOp (String _) = Bool True 
-stringOp _ = String "" --  throwError $ TypeMismatch "string" invalid_arg
+stringOp :: LispVal -> ThrowsError LispVal  
+stringOp (String _) = return $ Bool True 
+stringOp invalid_arg = throwError $ TypeMismatch "string" invalid_arg
 
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal 
